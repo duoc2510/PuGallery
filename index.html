@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Floating Photos Galaxy 3D</title>
+	<style>
+		@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap');
+
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			font-family: 'Inter', sans-serif;
+			background: linear-gradient(135deg, #0f0f23 0%, #1e1e3f 25%, #2d1b69 50%, #8b5cf6 75%, #a855f7 100%);
+			overflow: hidden;
+			height: 100vh;
+			cursor: grab;
+			position: relative;
+		}
+
+		body::before {
+			content: '';
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+				radial-gradient(circle at 80% 20%, rgba(255, 105, 180, 0.2) 0%, transparent 50%);
+			pointer-events: none;
+			z-index: -1;
+		}
+
+		body:active {
+			cursor: grabbing;
+		}
+
+		#container {
+			position: relative;
+			width: 100vw;
+			height: 100vh;
+		}
+
+		.ui-overlay {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			pointer-events: none;
+			z-index: 100;
+		}
+
+		.title {
+			position: absolute;
+			top: 40px;
+			left: 50%;
+			transform: translateX(-50%);
+			color: white;
+			font-family: 'Orbitron', monospace;
+			font-size: 2.8rem;
+			font-weight: 900;
+			text-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 0 60px rgba(138, 92, 246, 0.6);
+			text-align: center;
+			pointer-events: none;
+			letter-spacing: 3px;
+			background: linear-gradient(45deg, #ffffff, #a855f7, #ec4899);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			background-clip: text;
+			animation: titleGlow 3s ease-in-out infinite alternate;
+		}
+
+		@keyframes titleGlow {
+			0% {
+				text-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 0 60px rgba(138, 92, 246, 0.6);
+			}
+
+			100% {
+				text-shadow: 0 0 40px rgba(255, 255, 255, 1), 0 0 80px rgba(138, 92, 246, 0.8);
+			}
+		}
+
+		.controls {
+			position: absolute;
+			bottom: 40px;
+			left: 50%;
+			transform: translateX(-50%);
+			display: flex;
+			gap: 20px;
+			pointer-events: auto;
+		}
+
+		.control-btn {
+			background: rgba(255, 255, 255, 0.05);
+			border: 2px solid rgba(255, 255, 255, 0.1);
+			color: white;
+			padding: 12px 24px;
+			border-radius: 25px;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			backdrop-filter: blur(10px);
+			font-size: 14px;
+			font-weight: 500;
+			font-family: 'Inter', sans-serif;
+			position: relative;
+			overflow: hidden;
+		}
+
+		.control-btn:hover {
+			background: rgba(138, 92, 246, 0.2);
+			border-color: rgba(138, 92, 246, 0.5);
+			transform: translateY(-2px);
+		}
+
+		.control-btn:active {
+			transform: translateY(0);
+		}
+
+		.modal {
+			display: none;
+			position: fixed;
+			z-index: 1000;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0, 0, 0, 0.95);
+			backdrop-filter: blur(20px);
+			animation: modalFadeIn 0.3s ease-out;
+		}
+
+		@keyframes modalFadeIn {
+			from {
+				opacity: 0;
+			}
+
+			to {
+				opacity: 1;
+			}
+		}
+
+		.modal-content {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			border: none;
+			box-shadow: none;
+			background: none;
+			overflow: hidden;
+		}
+
+		.modal-content img {
+			max-width: 90vw;
+			max-height: 90vh;
+			object-fit: contain;
+			border-radius: 15px;
+			box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+			border: 3px solid rgba(255, 255, 255, 0.1);
+			transition: transform 0.3s ease;
+		}
+
+		.modal-content img:hover {
+			transform: scale(1.02);
+		}
+
+		.close {
+			position: absolute;
+			top: 30px;
+			right: 40px;
+			color: white;
+			font-size: 40px;
+			font-weight: bold;
+			cursor: pointer;
+			z-index: 1001;
+			text-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+			transition: all 0.3s ease;
+			width: 50px;
+			height: 50px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: rgba(255, 255, 255, 0.1);
+			border-radius: 50%;
+			backdrop-filter: blur(10px);
+		}
+
+		.close:hover {
+			color: #ff69b4;
+			background: rgba(255, 105, 180, 0.2);
+			transform: scale(1.1);
+		}
+
+		.loading {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			color: white;
+			font-size: 24px;
+			font-family: 'Orbitron', monospace;
+			font-weight: 700;
+			z-index: 50;
+			text-shadow: 0 0 20px rgba(138, 92, 246, 0.8);
+			animation: loadingPulse 2s ease-in-out infinite;
+		}
+
+		@keyframes loadingPulse {
+
+			0%,
+			100% {
+				opacity: 0.5;
+				transform: translate(-50%, -50%) scale(1);
+			}
+
+			50% {
+				opacity: 1;
+				transform: translate(-50%, -50%) scale(1.1);
+			}
+		}
+
+		/* Responsive design */
+		@media (max-width: 768px) {
+			.title {
+				font-size: 2rem;
+				top: 30px;
+			}
+
+			.controls {
+				flex-wrap: wrap;
+				gap: 15px;
+				bottom: 30px;
+			}
+
+			.control-btn {
+				padding: 10px 16px;
+				font-size: 12px;
+			}
+
+			.close {
+				top: 20px;
+				right: 20px;
+				font-size: 32px;
+				width: 40px;
+				height: 40px;
+			}
+		}
+	</style>
+</head>
+
+<body>
+	<div id="container">
+		<div class="loading" id="loading">✨ Đang tải Galaxy...</div>
+
+		<div class="ui-overlay">
+			<div class="title">🌌 Pu's Gallery</div>
+
+			<div class="controls">
+				<button class="control-btn" onclick="toggleAnimation()">⏸️ Tạm dừng</button>
+				<button class="control-btn" onclick="changeSpeed()">⚡ Tốc độ</button>
+				<button class="control-btn" onclick="resetCamera()">🏠 Reset</button>
+				<button class="control-btn" onclick="toggleFloat()">🎈 Float</button>
+				<button class="control-btn" onclick="changeCenterImage()">🎲 Đổi Center</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="modal" class="modal">
+		<span class="close" onclick="closeModal()">&times;</span>
+		<div class="modal-content">
+			<img id="modalImage" src="" alt="Gallery Image">
+		</div>
+	</div>
+	<div style="position: absolute; width: 0; height: 0; overflow: hidden;">
+		<div id="player" style="position: absolute; width: 0; height: 0; overflow: hidden;"></div>
+
+	</div>
+
+	<script src="https://www.youtube.com/iframe_api"></script>
+
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+	<script>
+		let scene, camera, renderer;
+		let centerPhoto;
+		let photoObjects = [];
+		let animationId;
+		let isAnimating = true;
+		let currentSpeed = 1;
+		let floatMode = true;
+		let mouse = new THREE.Vector2();
+		let raycaster = new THREE.Raycaster();
+		let cameraControls = {
+			mouseX: 0,
+			mouseY: 0,
+			targetX: 0,
+			targetY: 0,
+			radius: 60
+		};
+
+		// Dữ liệu ảnh
+		const totalImages = 55;
+		const baseImages = Array.from({ length: totalImages }, (_, i) => `images/${String(i + 1).padStart(3, '0')}.jpg`);
+
+		const repeatCount = 2;
+		const images = Array.from({ length: repeatCount }).flatMap(() => baseImages);
+
+		function init() {
+			// Scene
+			scene = new THREE.Scene();
+			scene.background = new THREE.Color(0x0f0f23);
+
+			// Camera
+			camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+			camera.position.set(0, 0, 60);
+
+			// Renderer
+			renderer = new THREE.WebGLRenderer({ antialias: true });
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			renderer.shadowMap.enabled = true;
+			renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+			document.getElementById('container').appendChild(renderer.domElement);
+
+			// Lighting
+			setupLighting();
+
+			// Create elements
+			createStars();
+			createFloatingPhotos();
+
+			// Controls
+			setupControls();
+
+			// Event listeners
+			window.addEventListener('resize', onWindowResize);
+			renderer.domElement.addEventListener('click', onMouseClick);
+			renderer.domElement.addEventListener('mousemove', onMouseMove);
+			document.addEventListener('keydown', onKeyDown);
+
+			// Start animation
+			animate();
+
+			// Hide loading
+			document.getElementById('loading').style.display = 'none';
+		}
+
+		function setupLighting() {
+			// Ambient light - tăng độ sáng để ảnh rõ hơn
+			const ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+			scene.add(ambientLight);
+
+			// Point light từ trung tâm - giảm màu hồng
+			const pointLight = new THREE.PointLight(0xffffff, 1.5, 100);
+			pointLight.position.set(0, 0, 0);
+			scene.add(pointLight);
+
+			// Directional light - ánh sáng chính
+			const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+			directionalLight.position.set(10, 10, 10);
+			scene.add(directionalLight);
+
+			// Thêm ánh sáng phụ để ảnh sáng đều
+			const backLight = new THREE.DirectionalLight(0x8b5cf6, 0.3);
+			backLight.position.set(-10, -10, -10);
+			scene.add(backLight);
+		}
+
+		function createStars() {
+			const starGeometry = new THREE.BufferGeometry();
+			const starMaterial = new THREE.PointsMaterial({
+				color: 0xffffff,
+				size: 1,
+				transparent: true,
+				opacity: 0.8
+			});
+
+			const starPositions = [];
+			for (let i = 0; i < 800; i++) {
+				const x = (Math.random() - 0.5) * 200;
+				const y = (Math.random() - 0.5) * 200;
+				const z = (Math.random() - 0.5) * 200;
+				starPositions.push(x, y, z);
+			}
+
+			starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+			const starField = new THREE.Points(starGeometry, starMaterial);
+			scene.add(starField);
+		}
+
+		function createCenterPhoto(imageUrl) {
+			const loader = new THREE.TextureLoader();
+
+			loader.load(imageUrl, (texture) => {
+				// Xóa ảnh trung tâm cũ nếu có
+				if (centerPhoto) {
+					scene.remove(centerPhoto);
+				}
+
+				// Tạo ảnh trung tâm mới với kích thước lớn hơn
+				const centerGeometry = new THREE.PlaneGeometry(8, 6);
+				const centerMaterial = new THREE.MeshLambertMaterial({
+					map: texture,
+					transparent: true,
+					opacity: 1
+				});
+
+				centerPhoto = new THREE.Mesh(centerGeometry, centerMaterial);
+				centerPhoto.position.set(0, 0, 0);
+
+				// Thêm viền sáng cho ảnh trung tâm
+				const borderGeometry = new THREE.PlaneGeometry(8.5, 6.5);
+				const borderMaterial = new THREE.MeshBasicMaterial({
+					color: 0xa855f7,
+					transparent: true,
+					opacity: 0.3
+				});
+				const border = new THREE.Mesh(borderGeometry, borderMaterial);
+				border.position.z = -0.1;
+				centerPhoto.add(border);
+
+				// Thêm glow effect
+				const glowGeometry = new THREE.PlaneGeometry(9, 7);
+				const glowMaterial = new THREE.MeshBasicMaterial({
+					color: 0xffffff,
+					transparent: true,
+					opacity: 0.1
+				});
+				const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+				glow.position.z = -0.2;
+				centerPhoto.add(glow);
+
+				// Lưu thông tin ảnh
+				centerPhoto.userData = {
+					imageUrl: imageUrl,
+					rotationSpeed: 0.005,
+					pulseSpeed: 0.01
+				};
+
+				scene.add(centerPhoto);
+			});
+		}
+
+		function createFloatingPhotos() {
+			const loader = new THREE.TextureLoader();
+
+			// Chọn ngẫu nhiên một ảnh làm center
+			const centerIndex = Math.floor(Math.random() * images.length);
+			const centerImageUrl = images[centerIndex];
+			createCenterPhoto(centerImageUrl);
+
+			// Tạo các ảnh còn lại xung quanh
+			images.forEach((imageUrl, index) => {
+				if (index === centerIndex) return; // Bỏ qua ảnh center
+
+				loader.load(imageUrl, (texture) => {
+					// Create photo frame
+					const photoGeometry = new THREE.PlaneGeometry(4, 3);
+					const photoMaterial = new THREE.MeshLambertMaterial({
+						map: texture,
+						transparent: true,
+						opacity: 1
+					});
+
+					const photo = new THREE.Mesh(photoGeometry, photoMaterial);
+
+					// Random position around the center với phân bố tự nhiên hơn
+					const radius = 20 + Math.random() * 35;
+					const phi = Math.random() * Math.PI * 2;
+					const theta = Math.random() * Math.PI;
+
+					photo.position.x = radius * Math.sin(theta) * Math.cos(phi);
+					photo.position.y = radius * Math.sin(theta) * Math.sin(phi);
+					photo.position.z = radius * Math.cos(theta);
+
+					// Look at center
+					photo.lookAt(0, 0, 0);
+
+					// Add random rotation nhỏ hơn để tự nhiên
+					photo.rotation.z = (Math.random() - 0.5) * 0.3;
+
+					// Store original position for floating animation
+					photo.userData = {
+						imageUrl: imageUrl,
+						originalPosition: photo.position.clone(),
+						floatOffset: Math.random() * Math.PI * 2,
+						floatSpeed: 0.3 + Math.random() * 0.4,
+						rotationSpeed: (Math.random() - 0.5) * 0.01,
+						orbitSpeed: (Math.random() - 0.5) * 0.002
+					};
+
+					// Thêm shadow nhẹ
+					const shadowGeometry = new THREE.PlaneGeometry(4.1, 3.1);
+					const shadowMaterial = new THREE.MeshBasicMaterial({
+						color: 0x000000,
+						transparent: true,
+						opacity: 0.2
+					});
+					const shadow = new THREE.Mesh(shadowGeometry, shadowMaterial);
+					shadow.position.z = -0.05;
+					photo.add(shadow);
+
+					scene.add(photo);
+					photoObjects.push(photo);
+				});
+			});
+		}
+
+		function setupControls() {
+			let isMouseDown = false;
+
+			renderer.domElement.addEventListener('mousedown', (event) => {
+				isMouseDown = true;
+				cameraControls.mouseX = event.clientX;
+				cameraControls.mouseY = event.clientY;
+			});
+
+			renderer.domElement.addEventListener('mousemove', (event) => {
+				if (isMouseDown) {
+					const deltaX = event.clientX - cameraControls.mouseX;
+					const deltaY = event.clientY - cameraControls.mouseY;
+
+					cameraControls.targetX += deltaX * 0.01;
+					cameraControls.targetY += deltaY * 0.01;
+
+					cameraControls.mouseX = event.clientX;
+					cameraControls.mouseY = event.clientY;
+				}
+			});
+
+			renderer.domElement.addEventListener('mouseup', () => {
+				isMouseDown = false;
+			});
+
+			renderer.domElement.addEventListener('wheel', (event) => {
+				cameraControls.radius += event.deltaY * 0.1;
+				cameraControls.radius = Math.max(20, Math.min(100, cameraControls.radius));
+			});
+		}
+
+		function updateCamera() {
+			const x = cameraControls.radius * Math.sin(cameraControls.targetX) * Math.cos(cameraControls.targetY);
+			const y = cameraControls.radius * Math.sin(cameraControls.targetY);
+			const z = cameraControls.radius * Math.cos(cameraControls.targetX) * Math.cos(cameraControls.targetY);
+
+			camera.position.set(x, y, z);
+			camera.lookAt(0, 0, 0);
+		}
+
+		function onMouseMove(event) {
+			mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+			mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+		}
+
+		function onMouseClick(event) {
+			raycaster.setFromCamera(mouse, camera);
+			const intersects = raycaster.intersectObjects([...photoObjects, centerPhoto]);
+
+			if (intersects.length > 0) {
+				const clickedObject = intersects[0].object;
+				if (clickedObject.userData.imageUrl) {
+					openModal(clickedObject.userData.imageUrl);
+				}
+			}
+		}
+
+		function animate() {
+			animationId = requestAnimationFrame(animate);
+
+			if (isAnimating) {
+				const time = Date.now() * 0.001;
+
+				// Animate center photo
+				if (centerPhoto) {
+					centerPhoto.rotation.z += centerPhoto.userData.rotationSpeed * currentSpeed;
+
+					// Pulse effect
+					const pulse = 1 + Math.sin(time * centerPhoto.userData.pulseSpeed) * 0.05;
+					centerPhoto.scale.setScalar(pulse);
+				}
+
+				// Animate floating photos
+				photoObjects.forEach((photo, index) => {
+					if (floatMode) {
+						// Floating animation nhẹ nhàng
+						const floatY = Math.sin(time * photo.userData.floatSpeed + photo.userData.floatOffset) * 1.5;
+						photo.position.y = photo.userData.originalPosition.y + floatY;
+
+						// Thêm chuyển động quỹ đạo nhẹ
+						const orbitOffset = Math.sin(time * photo.userData.orbitSpeed + index) * 0.5;
+						photo.position.x = photo.userData.originalPosition.x + orbitOffset;
+
+						// Subtle rotation
+						photo.rotation.y += photo.userData.rotationSpeed * currentSpeed;
+					}
+
+					// Always look at center
+					photo.lookAt(0, 0, 0);
+				});
+
+				// Auto-rotate camera chậm hơn
+				if (!document.querySelector('body:active')) {
+					cameraControls.targetX += 0.001 * currentSpeed;
+				}
+			}
+
+			updateCamera();
+			renderer.render(scene, camera);
+		}
+
+		function onWindowResize() {
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+			renderer.setSize(window.innerWidth, window.innerHeight);
+		}
+
+		function onKeyDown(event) {
+			if (event.key === 'Escape') {
+				closeModal();
+			}
+		}
+
+		// Control functions
+		function toggleAnimation() {
+			isAnimating = !isAnimating;
+			const btn = event.target;
+			btn.innerHTML = isAnimating ? '⏸️ Tạm dừng' : '▶️ Tiếp tục';
+		}
+
+		function changeSpeed() {
+			currentSpeed = currentSpeed === 1 ? 2 : currentSpeed === 2 ? 0.5 : 1;
+			const btn = event.target;
+			btn.innerHTML = `⚡ ${currentSpeed}x`;
+		}
+
+		function resetCamera() {
+			cameraControls.targetX = 0;
+			cameraControls.targetY = 0;
+			cameraControls.radius = 60;
+		}
+
+		function toggleFloat() {
+			floatMode = !floatMode;
+			const btn = event.target;
+			btn.innerHTML = floatMode ? '🎈 Float ON' : '🎈 Float OFF';
+		}
+
+		function changeCenterImage() {
+			// Chọn ngẫu nhiên một ảnh khác làm center
+			const randomIndex = Math.floor(Math.random() * images.length);
+			const newCenterImageUrl = images[randomIndex];
+			createCenterPhoto(newCenterImageUrl);
+		}
+
+		// Modal functions
+		function openModal(imageSrc) {
+			document.getElementById('modal').style.display = 'block';
+			document.getElementById('modalImage').src = imageSrc;
+		}
+
+		function closeModal() {
+			document.getElementById('modal').style.display = 'none';
+		}
+
+		// Event listeners for modal
+		window.onclick = function (event) {
+			const modal = document.getElementById('modal');
+			if (event.target === modal) {
+				closeModal();
+			}
+		}
+
+		// Initialize
+		let ytPlayer;
+
+		// YouTube API will gọi hàm này khi sẵn sàng
+		function onYouTubeIframeAPIReady() {
+			ytPlayer = new YT.Player('player', {
+				videoId: 'WCm2elbTEZQ',
+				playerVars: {
+					autoplay: 1,
+					mute: 1,
+					loop: 1,
+					playlist: 'WCm2elbTEZQ',
+					controls: 0,
+					showinfo: 0,
+					modestbranding: 1,
+					rel: 0,
+				},
+				events: {
+					'onReady': (event) => {
+						event.target.playVideo();
+					}
+				}
+			});
+		}
+
+		// Khi người dùng click – gỡ mute
+		document.addEventListener('click', () => {
+			if (ytPlayer && ytPlayer.unMute) {
+				ytPlayer.unMute();
+			}
+		});
+
+		init();
+	</script>
+</body>
+
+</html>
